@@ -26,12 +26,15 @@ class VideoProcessor:
 
     def process_video(self):
         cap = cv2.VideoCapture(self.video_path)
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        out = cv2.VideoWriter("ascii_output.mp4", fourcc, self.fps, (self.output_width, self.output_height))
+
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
             cv2.imshow("frame", frame)
-
+            out.write(frame)
 
     def ascii_art(frame):
         pass
