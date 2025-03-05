@@ -29,22 +29,20 @@ class VideoProcessor:
 
     def process_frame(self, frame):
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        resized_gray = cv2.resize(gray, (self.output_width, self.output_height))
+        resized_gray = cv2.resize(gray, (self.columns, self.rows))
 
         ascii = []
-
-        # TODO: MAKE INTO METHOD
         for row in resized_gray:
             line = "".join([ASCII_CHARS[pixel * (len(ASCII_CHARS) - 1) // 255] for pixel in row])
             ascii.append(line)
 
-        ascii_image = "\n".join(ascii)
-
+        # Create the output image
         img = Image.new("RGB", (self.output_width, self.output_height), (0, 0, 0))
         draw = ImageDraw.Draw(img)
 
+        # Draw each line of ASCII text
         y = 0
-        for line in ascii_image:
+        for line in ascii:
             draw.text((0, y), line, fill=(255, 255, 255), font=self.font)
             y += self.char_height
         
