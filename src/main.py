@@ -3,25 +3,35 @@ from ascii_config import ASCII_COLUMNS, ASCII_CHARS
 from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 from multiprocessing import Pool, cpu_count
-
+from math import floor
 class VideoProcessor:
     def __init__(self, video_path, font_path, font_size):
-        self.video_path = video_path
-        self.columns = ASCII_COLUMNS
-        self.rows = 0
-        self.width = 0
-        self.height = 0
-        self.aspect_ratio = 0.0
-        self.fps = 0
-        self.prep_video()   # Populate previous variables
         # Determine output dimensions from font size
         self.font = ImageFont.truetype(font_path, font_size) if font_path.endswith(('.ttf', '.otf')) else ImageFont.load_default()
         self.font_size = font_size
         self.char_width, self.char_height = self.get_font_dimensions()
         print("char_width: ", self.char_width)
         print("char_height: ", self.char_height)
-        self.output_width = self.columns* self.char_width
-        self.output_height = self.rows * self.char_height
+
+        self.video_path = video_path
+        self.columns = 0
+        self.rows = 0
+        self.width = 0
+        self.height = 0
+        self.fps = 0
+        self.prep_video()   # Populate previous variables
+        print("columns: ", self.columns)
+        print("rows: ", self.rows)
+        print("width: ", self.width)
+        print("height: ", self.height)
+        print("fps: ", self.fps)
+
+
+        self.output_width = int(self.columns * self.char_width)
+        self.output_height = int(self.rows * self.char_height)
+
+        print("output_width: ", self.output_width)
+        print("output_height: ", self.output_height)
 
 
 
@@ -30,16 +40,17 @@ class VideoProcessor:
         self.fps = cap.get(cv2.CAP_PROP_FPS)
         self.width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
         self.height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        self.aspect_ratio = self.height / self.width
-        self.rows = int(self.columns * self.aspect_ratio)
+        self.columns = floor(self.width / self.char_width)
+        self.rows = floor(self.height / self.char_height)
+
     def get_font_dimensions(self):
         dummy_img = Image.new("RGB", (100, 100))
         draw = ImageDraw.Draw(dummy_img)
         # Get the bounding box of the text
         bbox = draw.textbbox((0, 0), "A", font=self.font)
         # bbox returns (left, top, right, bottom)
-        char_width = bbox[2] - bbox[0]
-        char_height = bbox[3] - bbox[1]
+        char_width = (bbox[2] - bbox[0])*2
+        char_height = (bbox[3] - bbox[1])*2
         return char_width, char_height
 
     def process_frame(self, frame):
@@ -60,7 +71,9 @@ class VideoProcessor:
         y = 0
         for line in ascii:
             # print("line: ", line)
-            draw.text((0, y), line, fill=(255, 255, 255), font=self.font)
+            for i in range(len(line)):
+                draw.text((i*self.char_width, y), line[i], fill=(255, 255, 255), font=self.font)
+           
             y += self.char_height
         
         frame_out = np.array(img)
@@ -89,6 +102,7 @@ class VideoProcessor:
 
         # Write processed frames
         for frame_out in processed_frames:
+            print("frame_out: ", frame_out.shape)
             out.write(frame_out)
             cv2.imshow("frame_out", frame_out)
             if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -103,7 +117,7 @@ class VideoProcessor:
 
 
 def main():
-    video_processor = VideoProcessor("video/boxing.mp4", "font/SF-Pro.ttf", 20)
+    video_processor = VideoProcessor("video/boxing.mp4", "font/SF-Pro.ttf", 10)
     video_processor.process_video()
 
 if __name__ == "__main__":
