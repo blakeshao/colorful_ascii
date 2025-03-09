@@ -1,13 +1,15 @@
 import cv2
-from ascii_config import ASCII_CHARS
 from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 from multiprocessing import Pool, cpu_count
 from multiprocessing.pool import ThreadPool
 from math import floor
+from schema import RenderingConfig
+from ascii_config import RENDERING_CONFIG
 
 class VideoProcessor:
-    def __init__(self, video_path, font_path, font_size=20, background_color=(0, 0, 0)):
+    def __init__(self, video_path, rendering_config: RenderingConfig):
+        font_path, font_size, background_color, self.ascii_characters = rendering_config.font_path, rendering_config.font_size, rendering_config.background_color, rendering_config.characters
         # Determine output dimensions from font size
         self.font = ImageFont.truetype(font_path, font_size) if font_path.endswith(('.ttf', '.otf')) else ImageFont.load_default()
         self.font_size = font_size
@@ -15,7 +17,7 @@ class VideoProcessor:
         print("char_width: ", self.char_width)
         print("char_height: ", self.char_height)
 
-        self.background_color = (0, 0, 0)
+        self.background_color = background_color
 
         self.video_path = video_path
         self.columns = 0
@@ -60,41 +62,35 @@ class VideoProcessor:
         return char_width, char_height
     
     def _process_chunk(self, args):
-        chunk, ascii, draw = args
+        chunk, ascii, draw, colors = args
         start_idx, end_idx = chunk
         for y_idx, row in enumerate(ascii[start_idx:end_idx], start_idx):
             y = y_idx * self.char_height
             for x_idx, char in enumerate(row):
                 x = x_idx * self.char_width
-                draw.text((x, y), char, fill=(255, 255, 255), font=self.font)
+                draw.text((x, y), char, fill=tuple(colors[y_idx, x_idx]), font=self.font)
 
     def process_frame(self, frame):
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         resized_gray = cv2.resize(gray, (self.columns, self.rows))
 
-        normalized = (resized_gray / 255.0 * (len(ASCII_CHARS) - 1)).astype(int)
-        ascii = np.array(list(ASCII_CHARS))[normalized]
+        normalized = resized_gray / 255.0
+        ascii = np.full((self.rows, self.columns), self.ascii_characters[0].char)
+        colors = np.full((self.rows, self.columns, 3), self.ascii_characters[0].color)
 
-
-        
+        for config in self.ascii_characters:
+            mask = (normalized >= config.threshold[0]) & (normalized < config.threshold[1])
+            ascii[mask] = config.char
+            colors[mask] = np.array(config.color)
 
         # Create the output image
-        img = Image.new("RGB", (self.output_width, self.output_height), (0, 0, 0))
+        img = Image.new("RGB", (self.output_width, self.output_height), self.background_color)
         draw = ImageDraw.Draw(img)
-
-        # Draw each line of ASCII text
-        # y = 0
-        # for line in ascii:
-        #     # print("line: ", line)
-        #     for i in range(len(line)):
-        #         draw.text((i*self.char_width, y), line[i], fill=(255, 255, 255), font=self.font)
-           
-        #     y += self.char_height
 
         chunk_size = max(1, self.rows // cpu_count())
         chunks = [(i, min(i + chunk_size, self.rows)) for i in range(0, self.rows, chunk_size)]
         
-        chunk_args = [(chunk, ascii, draw) for chunk in chunks]
+        chunk_args = [(chunk, ascii, draw, colors) for chunk in chunks]
 
         with ThreadPool(processes=cpu_count()) as pool:
             pool.map(self._process_chunk, chunk_args)
@@ -139,7 +135,7 @@ class VideoProcessor:
 
 
 def main():
-    video_processor = VideoProcessor("video/boxing.mp4", "font/SF-Pro.ttf", 20)
+    video_processor = VideoProcessor("video/boxing.mp4", RENDERING_CONFIG)
     video_processor.process_video()
 
 if __name__ == "__main__":
