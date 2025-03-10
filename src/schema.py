@@ -9,6 +9,6 @@ class RenderingConfig(BaseModel):
     font_path: str
     background_color: tuple[int, int, int]
     characters: list[ASCII_Character]
-
+    original_color: bool
 
 

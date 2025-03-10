@@ -9,7 +9,9 @@ from ascii_config import RENDERING_CONFIG
 
 class VideoProcessor:
     def __init__(self, video_path, rendering_config: RenderingConfig):
-        font_path, font_size, background_color, self.ascii_characters = rendering_config.font_path, rendering_config.font_size, rendering_config.background_color, rendering_config.characters
+
+        self.rendering_config = rendering_config
+        font_path, font_size, background_color, self.ascii_characters, self.original_color = rendering_config.font_path, rendering_config.font_size, rendering_config.background_color, rendering_config.characters, rendering_config.original_color    
         # Determine output dimensions from font size
         self.font = ImageFont.truetype(font_path, font_size) if font_path.endswith(('.ttf', '.otf')) else ImageFont.load_default()
         self.font_size = font_size
@@ -57,8 +59,8 @@ class VideoProcessor:
         # Get the bounding box of the text
         bbox = draw.textbbox((0, 0), "A", font=self.font)
         # bbox returns (left, top, right, bottom)
-        char_width = (bbox[2] - bbox[0])*1.25
-        char_height = (bbox[3] - bbox[1])*1.25
+        char_width = (bbox[2] - bbox[0])
+        char_height = (bbox[3] - bbox[1])
         return char_width, char_height
     
     def _process_chunk(self, args):
@@ -76,12 +78,18 @@ class VideoProcessor:
 
         normalized = resized_gray / 255.0
         ascii = np.full((self.rows, self.columns), self.ascii_characters[0].char)
-        colors = np.full((self.rows, self.columns, 3), self.ascii_characters[0].color)
+        if self.original_color:
+            colors = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            colors = cv2.resize(colors, (self.columns, self.rows))
+            colors = [tuple(pixel) for row in colors for pixel in row]
+            colors = np.array(colors).reshape(self.rows, self.columns, 3)
+        else:
+            colors = np.full((self.rows, self.columns, 3), self.ascii_characters[0].color)
 
-        for config in self.ascii_characters:
-            mask = (normalized >= config.threshold[0]) & (normalized < config.threshold[1])
-            ascii[mask] = config.char
-            colors[mask] = np.array(config.color)
+            for config in self.ascii_characters:
+                mask = (normalized >= config.threshold[0]) & (normalized < config.threshold[1])
+                ascii[mask] = config.char
+                colors[mask] = np.array(config.color)
 
         # Create the output image
         img = Image.new("RGB", (self.output_width, self.output_height), self.background_color)
@@ -103,7 +111,7 @@ class VideoProcessor:
         print(f"Processing video: {self.video_path}")
         cap = cv2.VideoCapture(self.video_path)
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter("output/ascii_output.mp4", fourcc, self.fps, (self.output_width, self.output_height))
+        out = cv2.VideoWriter(f"output/{self.video_path.split('/')[-1].split('.')[0]}.mp4", fourcc, self.fps, (self.output_width, self.output_height))
 
         frames = []
         while cap.isOpened():
@@ -135,7 +143,7 @@ class VideoProcessor:
 
 
 def main():
-    video_processor = VideoProcessor("video/boxing.mp4", RENDERING_CONFIG)
+    video_processor = VideoProcessor("video/gundam.mp4", RENDERING_CONFIG)
     video_processor.process_video()
 
 if __name__ == "__main__":
