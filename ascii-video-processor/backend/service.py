@@ -110,7 +110,7 @@ class VideoProcessor:
     def process_video(self):
         print(f"Processing video: {self.video_path}")
         cap = cv2.VideoCapture(self.video_path)
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        fourcc = cv2.VideoWriter_fourcc(*'avc1')
         output_path = f"output/{self.video_path.split('/')[-1].split('.')[0]}_font_size_{self.font_size}.mp4"
         out = cv2.VideoWriter(output_path, fourcc, self.fps, (self.output_width, self.output_height))
 
@@ -120,7 +120,7 @@ class VideoProcessor:
             if not ret:
                 break
             frames.append(frame)
-            cv2.imshow("frame", frame)
+            # cv2.imshow("frame", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
@@ -132,7 +132,7 @@ class VideoProcessor:
         for frame_out in processed_frames:
             print("frame_out: ", frame_out.shape)
             out.write(frame_out)
-            cv2.imshow("frame_out", frame_out)
+            # cv2.imshow("frame_out", frame_out)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 

@@ -11,7 +11,7 @@ ASCII_CHARS = [
 
 
 RENDERING_CONFIG = RenderingConfig(
-    font_size=30,
+    font_size=15,
     font_path="font/SF-Pro.ttf",
     background_color=(255, 255, 255),
     characters=ASCII_CHARS,

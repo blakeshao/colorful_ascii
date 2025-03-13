@@ -20,14 +20,23 @@ export default function Home() {
         method: 'POST',
         body: formData,
       })
-
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      setVideoUrl(url)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const blob = await response.blob();
+      if (blob.size === 0) {
+        throw new Error('Received empty video file');
+      }
+      
+      const url = URL.createObjectURL(blob);
+      setVideoUrl(url);
     } catch (error) {
-      console.error('Error processing video:', error)
+      console.error('Error processing video:', error);
+      // You might want to show an error message to the user here
     } finally {
-      setProcessing(false)
+      setProcessing(false);
     }
   }
 

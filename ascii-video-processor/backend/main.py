@@ -26,4 +26,4 @@ async def process_video(file: UploadFile = File(...)):
     processor = VideoProcessor(f"uploads/{file.filename}", RENDERING_CONFIG)
     output_path = processor.process_video()
     
-    return FileResponse(output_path)
+    return FileResponse(output_path, media_type='video/mp4', filename=output_path.split('/')[-1])
