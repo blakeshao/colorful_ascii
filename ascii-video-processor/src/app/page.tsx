@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { ASCIIConfig, ASCIICharacter } from './schema'
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null)
@@ -15,10 +16,41 @@ export default function Home() {
     const formData = new FormData()
     formData.append('file', file)
 
+    const ASCII_CHARS: ASCIICharacter[] = [
+      { char: '.', threshold: [0, 0.2], color: [0, 0, 0] },
+      { char: ':', threshold: [0.2, 0.3], color: [0, 0, 0] },
+      { char: '0', threshold: [0.3, 0.4], color: [0, 0, 0] },
+      { char: '+', threshold: [0.4, 0.5], color: [0, 0, 0] },
+      { char: '*', threshold: [0.5, 1.0], color: [0, 0, 0] },
+    ]
+
+    const config: ASCIIConfig = {
+      font_size: 15,
+      font_path: 'font/SF-Pro.ttf',
+      background_color: [255, 255, 255],
+      characters: ASCII_CHARS,
+      original_color: false,
+    }
+
+    formData.append('config', JSON.stringify(config))
+
+    
+
+    console.log('File:', file);
+    console.log('Config:', config);
+    console.log('FormData entries:');
+    for (let pair of formData.entries()) {
+      console.log(pair[0], pair[1]);
+    }
+
+
     try {
       const response = await fetch('http://localhost:8000/api/process-video', {
         method: 'POST',
         body: formData,
+        headers: {
+          'Accept': 'application/json',
+        },
       })
       
       if (!response.ok) {
