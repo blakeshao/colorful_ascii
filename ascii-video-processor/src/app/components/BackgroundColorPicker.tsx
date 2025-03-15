@@ -15,7 +15,7 @@ export function BackgroundColorPicker({
   
 
   return (
-    <div className="space-y-2">
+    <div>
       <label className="block text-sm font-medium">
         Background Color
       </label>

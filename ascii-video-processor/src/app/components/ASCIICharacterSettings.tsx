@@ -6,7 +6,6 @@ interface ASCIICharacterSettingsProps {
   onCharacterUpdate: (index: number, field: keyof ASCIICharacter, value: any) => void;
 }
 
-
 export function ASCIICharacterSettings({ asciiChars, onCharacterUpdate }: ASCIICharacterSettingsProps) {
   return (
     <div>
@@ -14,28 +13,59 @@ export function ASCIICharacterSettings({ asciiChars, onCharacterUpdate }: ASCIIC
       <div className="space-y-2">
         {asciiChars.map((char, index) => (
           <div key={index} className="flex space-x-4 items-center">
-            <input
-              type="text"
-              value={char.char}
-              onChange={(e) => onCharacterUpdate(index, 'char', e.target.value)}
-              className="border rounded p-2 w-12"
-              maxLength={1}
-            />
-            <div>
-              <label className="block text-xs">Threshold</label>
+            <div className="flex flex-col gap-1">
+              {index === 0 && <label className="block text-xs">Char</label>}
               <input
                 type="text"
-                value={`${char.threshold[0]}-${char.threshold[1]}`}
-                onChange={(e) => {
-                  const [min, max] = e.target.value.split('-').map(Number);
-                  onCharacterUpdate(index, 'threshold', [min, max]);
-                }}
-                className="border rounded p-2 w-24"
-                placeholder="0.0-1.0"
+                value={char.char}
+                onChange={(e) => onCharacterUpdate(index, 'char', e.target.value)}
+                className="border p-2 w-12"
+                maxLength={1}
               />
             </div>
+            <div className="space-y-1">
+              {index === 0 && <label className="block text-xs">Threshold Range</label>}
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={char.threshold[0]}
+                  onChange={(e) => {
+                    const min = Math.max(0, Math.min(1, Number(e.target.value)));
+                    onCharacterUpdate(index, 'threshold', [min, char.threshold[1]]);
+                    // Update previous character's upper threshold
+                    if (index > 0) {
+                      onCharacterUpdate(index - 1, 'threshold', [asciiChars[index - 1].threshold[0], min]);
+                    }
+                    
+                  }}
+                  className="border p-2 w-20"
+                  step="0.05"
+                  min={index === 0 ? 0 : asciiChars[index - 1].threshold[0]}
+                  max={index === 0 ? 0 : index === asciiChars.length - 1 ? 1 : asciiChars[index + 1].threshold[0]}
+                  placeholder="0.0"
+                />
+                <span className="text-xs">to</span>
+                <input
+                  type="number"
+                  value={char.threshold[1]}
+                  onChange={(e) => {
+                    const max = Math.max(0, Math.min(1, Number(e.target.value)));
+                    onCharacterUpdate(index, 'threshold', [char.threshold[0], max]);
+                    // Update next character's lower threshold
+                    if (index < asciiChars.length - 1) {
+                      onCharacterUpdate(index + 1, 'threshold', [max, asciiChars[index + 1].threshold[1]]);
+                    }
+                  }}
+                  className="border p-2 w-20"
+                  step="0.05"
+                  min={index === asciiChars.length - 1 ? 1 : asciiChars[index].threshold[0]}
+                  max={index === asciiChars.length - 1 ? 1 : asciiChars[index + 1].threshold[1]}
+                  placeholder="1.0"
+                />
+              </div>
+            </div>
             <div>
-              <label className="block text-xs">Color</label>
+              {index === 0 && <label className="block text-xs">Color</label>}
               <input
                 type="color"
                 value={rgbToHex(char.color)}
@@ -44,11 +74,10 @@ export function ASCIICharacterSettings({ asciiChars, onCharacterUpdate }: ASCIIC
                   const rgb = hexToRgb(hex);
                   onCharacterUpdate(index, 'color', rgb);
                 }}
-                className="w-12 h-8 cursor-pointer"
+                className="w-12 p-2 cursor-pointer"
                 style={{ 
                   padding: 0,
-                  border: '1px solid #ccc',
-                  borderRadius: '4px'
+                  height: '42px' // Matches the height of text inputs with border and padding
                 }}
               />
             </div>

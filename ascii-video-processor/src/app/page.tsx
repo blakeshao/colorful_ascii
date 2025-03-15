@@ -5,6 +5,9 @@ import { ASCIIConfig, ASCIICharacter } from './schema'
 import { FontSettings } from './components/FontSettings'
 import { ASCIICharacterSettings } from './components/ASCIICharacterSettings'
 import { BackgroundColorPicker } from './components/BackgroundColorPicker'
+import Gallery from './components/Gallery'
+import Link from 'next/link'
+
 export default function Home() {
   const [file, setFile] = useState<File | null>(null)
   const [processing, setProcessing] = useState(false)
@@ -88,55 +91,83 @@ export default function Home() {
     }
     setCharacters(updatedChars)
   }
-
+ 
   return (
-    <main className="min-h-screen p-8">
-      <h1 className="text-3xl font-bold mb-8">ASCII Video Processor</h1>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <input
-            type="file"
-            accept="video/*"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-            className="border p-2"
-          />
+    <main className="min-h-screen p-20 items-center">
+     <div className="flex flex-col gap-8">
+      <div>
+        <div className="flex flex-row gap-2 items-baseline mb-2">
+          <span className="text-md">colorful_ascii</span>
+          <span className="text-xs">by Blake S.</span>
+          
         </div>
-
-        <BackgroundColorPicker
-          backgroundColor={backgroundColor}
-          onBackgroundColorChange={setBackgroundColor}
-        />
-
-        <FontSettings
-          selectedFont={fontPath}
-          fontSize={fontSize}
-          onFontChange={setFontPath}
-          onFontSizeChange={setFontSize}
-        />
-
-        <ASCIICharacterSettings
-          asciiChars={characters}
-          onCharacterUpdate={handleCharacterUpdate}
-        />
-
         
+        <div className="flex flex-col md:flex-row gap-8 h-full w-full justify-center">
+          <div className="w-full md:w-3/4 flex flex-col items-center border border-1 aspect-video">
+            {processing ? (
+              <div className="w-full flex justify-center items-center h-full">
+                <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-white"></div>
+              </div>
+            ) : videoUrl ? (
+              <div className="w-full h-full flex justify-center items-center p-4">
+                <video controls src={videoUrl} className="max-w-full max-h-full object-contain" />
+              </div>
+            ) : (
+              <div className="w-full flex justify-center items-center h-full">
+                <p>Upload a video to get started</p>
+              </div>
+            )}
+          </div>
 
-        <button
-          type="submit"
-          disabled={!file || processing}
-          className="bg-blue-500 text-white px-4 py-2 rounded disabled:bg-gray-300"
-        >
-          {processing ? 'Processing...' : 'Process Video'}
-        </button>
-      </form>
+          <div className="w-full md:w-1/4">
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="mb-4">
+                <Link href="/how-to" className="text-sm hover:opacity-80 underline">How to use</Link>
+              </div>
+              <div>
+                <p className="text-sm">Upload a video</p>
+                <input
+                  type="file"
+                  accept="video/*"
+                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  className="border p-2"
+                />
+              </div>
 
-      {videoUrl && (
-        <div className="mt-8">
-          <h2 className="text-xl font-bold mb-4">Processed Video:</h2>
-          <video controls src={videoUrl} className="max-w-full" />
+              <BackgroundColorPicker
+                backgroundColor={backgroundColor}
+                onBackgroundColorChange={setBackgroundColor}
+              />
+
+              <FontSettings
+                selectedFont={fontPath}
+                fontSize={fontSize}
+                onFontChange={setFontPath}
+                onFontSizeChange={setFontSize}
+              />
+
+              <ASCIICharacterSettings
+                asciiChars={characters}
+                onCharacterUpdate={handleCharacterUpdate}
+              />
+
+              <button
+                type="submit"
+                disabled={!file || processing}
+                className="border-2 border-foreground px-4 my-4 py-2 text-foreground disabled:opacity-50 disabled:border-opacity-50 disabled:text-opacity-50"
+              >
+                {processing ? 'Processing...' : 'Process Video'}
+              </button>
+            </form>
+          </div>
         </div>
-      )}
+      </div>
+      <div className="flex flex-col">
+        <p className="text-md mb-2">Gallery</p>
+        <Gallery />
+      </div>
+      </div>
     </main>
   )
 }

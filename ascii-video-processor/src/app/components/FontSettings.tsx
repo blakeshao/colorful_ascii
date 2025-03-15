@@ -29,7 +29,7 @@ export function FontSettings({ selectedFont, fontSize, onFontChange, onFontSizeC
         <select
           value={selectedFont}
           onChange={(e) => onFontChange(e.target.value)}
-          className="border rounded p-2 w-full max-w-xs"
+          className="border p-2 w-full max-w-xs"
         >
           {availableFonts.map((font) => (
             <option key={font.value} value={font.value}>
@@ -47,7 +47,7 @@ export function FontSettings({ selectedFont, fontSize, onFontChange, onFontSizeC
           onChange={(e) => onFontSizeChange(Number(e.target.value))}
           min="8"
           max="200"
-          className="border rounded p-2 w-full max-w-xs"
+          className="border p-2 w-full max-w-xs"
         />
       </div>
     </div>
