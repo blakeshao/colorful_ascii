@@ -9,17 +9,14 @@ class VideoIO:
     def read_video(video_path):
         frames = []
         cap = cv2.VideoCapture(video_path)
-        cv2.namedWindow('Video', cv2.WINDOW_NORMAL)
         while cap.isOpened():
+            print(f"Reading frame {cap.get(cv2.CAP_PROP_POS_FRAMES)}")
             ret, frame = cap.read()
             if not ret:
                 break
             frames.append(frame) 
-            cv2.imshow('Video', frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-        cap.release()
-        cv2.destroyWindow('Video')
+        # cap.release()
+  
         return frames
 
     @staticmethod

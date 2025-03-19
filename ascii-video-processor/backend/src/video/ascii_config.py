@@ -16,7 +16,7 @@ RENDERING_CONFIG = RenderingConfig(
     background_color=(255, 255, 255),
     characters=ASCII_CHARS,
     original_color=False,
-    rendering_method="LUMINANCE"
+    rendering_method="EDGE_DETECTION"
 )
 
 

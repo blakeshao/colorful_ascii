@@ -23,7 +23,7 @@ export default function Home() {
       { char: '*', threshold: [0.5, 1.0], color: [0, 0, 0] },
   ])
   const [originalColor, setOriginalColor] = useState(false)
-  const [renderingMethod, setRenderingMethod] = useState<RenderingMethod>(RenderingMethod.LUMINANCE)
+  const [renderingMethod, setRenderingMethod] = useState<RenderingMethod>(RenderingMethod.EDGE_DETECTION)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!file) return

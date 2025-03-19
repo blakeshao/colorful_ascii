@@ -10,6 +10,7 @@ from frame_processors.luminance import LuminanceFrameProcessor
 from frame_processors.edge_detection import EdgeDetectionFrameProcessor
 from utils.videoIO import VideoIO
 from pathlib import Path
+from functools import partial
 
 class VideoProcessor:
     def __init__(self, video_path, rendering_config: RenderingConfig):
@@ -91,9 +92,10 @@ class VideoProcessor:
             ascii[mask] = char_config.char
             colors[mask] = np.array(char_config.color)
             
-        return self._render_ascii_frame(ascii, colors)
+        return ascii, colors
     
     def _render_ascii_frame(self, ascii, colors):
+        print("Rendering ascii frame...")
         img = Image.new("RGB", (self.output_width, self.output_height), self.config.background_color)
         draw = ImageDraw.Draw(img)
         
@@ -107,30 +109,37 @@ class VideoProcessor:
         frame_out = np.array(img)
         return cv2.cvtColor(frame_out, cv2.COLOR_RGB2BGR)
     
-    def _process_frame(self, frame, context):
+    def _process_frame(self, frame):
         """Process a single frame with the frame processor"""
+        print("Processing frame...")
+        context = {
+            'columns': self.columns,
+            'rows': self.rows
+        }
         normalized_frame = self.frame_processor.process(frame, context)
-        return self.create_ascii_frame(normalized_frame)
+        ascii, colors = self.create_ascii_frame(normalized_frame)
+        frame_out = self._render_ascii_frame(ascii, colors)
+        return frame_out
 
     def process_video(self):
         print(f"Processing video: {self.video_path}")
         output_path = self._get_output_path()
         
         frames = VideoIO.read_video(self.video_path)
-        # Create a simple context object with just the necessary attributes
-        context = {
-            'columns': self.columns,
-            'rows': self.rows
-        }
-        
-        processed_frames = self._process_frames_parallel(frames, context)
+    
+
+        print("Processing frames in parallel...")
+        with Pool(processes=cpu_count()) as pool:
+            processed_frames = pool.map(self._process_frame, frames)
+        # processed_frames = []
+        # for frame in frames:
+        #     processed_frames.append(self._process_frame(frame))
+            
+        print("Processed frames: ", len(processed_frames))
         VideoIO.write_video(processed_frames, output_path, self.fps, (self.output_width, self.output_height))
         return output_path
 
-    def _process_frames_parallel(self, frames, context):
-        with Pool(processes=cpu_count()) as pool:
-            # Use pool.starmap with _process_frame instead
-            return pool.starmap(self._process_frame, [(frame, context) for frame in frames])
+ 
         
     def _get_output_path(self):
         BASE_DIR = Path(__file__).parent.parent.parent
