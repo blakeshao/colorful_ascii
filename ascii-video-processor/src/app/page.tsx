@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ASCIIConfig, ASCIICharacter } from './schema'
+import { ASCIIConfig, ASCIICharacter, RenderingMethod } from './schema'
 import { FontSettings } from './components/FontSettings'
 import { ASCIICharacterSettings } from './components/ASCIICharacterSettings'
 import { BackgroundColorPicker } from './components/BackgroundColorPicker'
@@ -13,7 +13,7 @@ export default function Home() {
   const [processing, setProcessing] = useState(false)
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
   const [fontSize, setFontSize] = useState(15)
-  const [fontPath, setFontPath] = useState('fonts/SF-Pro.ttf')
+  const [fontPath, setFontPath] = useState('SF-Pro')
   const [backgroundColor, setBackgroundColor] = useState<[number, number, number]>([255, 255, 255])
   const [characters, setCharacters] = useState<ASCIICharacter[]>([
       { char: '.', threshold: [0, 0.2], color: [0, 0, 0] },
@@ -23,7 +23,7 @@ export default function Home() {
       { char: '*', threshold: [0.5, 1.0], color: [0, 0, 0] },
   ])
   const [originalColor, setOriginalColor] = useState(false)
-
+  const [renderingMethod, setRenderingMethod] = useState<RenderingMethod>(RenderingMethod.LUMINANCE)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!file) return
@@ -40,6 +40,7 @@ export default function Home() {
       background_color: backgroundColor,
       characters: chars,
       original_color: originalColor,
+      rendering_method: renderingMethod
     }
 
     formData.append('config', JSON.stringify(config))

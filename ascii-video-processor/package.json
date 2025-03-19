@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"next dev\" \"cd backend && uvicorn main:app --reload\"",
+    "dev": "concurrently \"next dev\" \"cd backend/src && uvicorn main:app --reload\"",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
