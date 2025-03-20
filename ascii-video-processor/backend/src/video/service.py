@@ -6,11 +6,48 @@ from multiprocessing.pool import ThreadPool
 from math import floor
 from video.schema import RenderingConfig
 from video.ascii_config import RENDERING_CONFIG
-from frame_processors.luminance import LuminanceFrameProcessor
-from frame_processors.edge_detection import EdgeDetectionFrameProcessor
+from frame_processors.luminance import luminance_process
+from frame_processors.edge_detection import edge_detection_process
 from utils.videoIO import VideoIO
 from pathlib import Path
 from functools import partial
+from tqdm import tqdm
+
+def process_frame_static(frame, columns, rows, char_width, char_height, config, font_path, font_size):
+        if font_path.endswith(('.ttf', '.otf')):
+            font = ImageFont.truetype(font_path, font_size)
+        else:
+            font = ImageFont.load_default()
+            
+        # Process frame based on rendering method
+        context = {'columns': columns, 'rows': rows}
+        
+        if config['rendering_method'] == "LUMINANCE":
+            processed_frame = luminance_process(frame, context)
+        else:  # EDGE_DETECTION
+            processed_frame = edge_detection_process(frame, context)
+        
+        # Create ASCII representation
+        ascii = np.full((rows, columns), config['characters'][0]['char'])
+        colors = np.full((rows, columns, 3), config['characters'][0]['color'])
+        
+        for char_config in config['characters']:
+            mask = (processed_frame >= char_config['threshold'][0]) & (processed_frame < char_config['threshold'][1])
+            ascii[mask] = char_config['char']
+            colors[mask] = np.array(char_config['color'])
+        
+        # Render ASCII frame
+        img = Image.new("RGB", (columns * char_width, rows * char_height), config['background_color'])
+        draw = ImageDraw.Draw(img)
+        
+        for y_idx, row in enumerate(ascii):
+            y = y_idx * char_height
+            for x_idx, char in enumerate(row):
+                x = x_idx * char_width
+                draw.text((x, y), char, fill=tuple(colors[y_idx, x_idx]), font=font)
+        
+        frame_out = np.array(img)
+        return cv2.cvtColor(frame_out, cv2.COLOR_RGB2BGR)
 
 class VideoProcessor:
     def __init__(self, video_path, rendering_config: RenderingConfig):
@@ -22,16 +59,16 @@ class VideoProcessor:
         print("width: ", self.width)
         print("height: ", self.height)
         print("fps: ", self.fps)
-        self._setup_processor()
+       
 
 
     def _setup_font(self):
         print("font_path: ", self.config.font_path)
         if self.config.font_path.endswith(('.ttf', '.otf')):
-            self.font = ImageFont.truetype(self.config.font_path, self.config.font_size)
+            font = ImageFont.truetype(self.config.font_path, self.config.font_size)
         else:
-            self.font = ImageFont.load_default()
-        self.char_width, self.char_height = self._get_font_dimensions()
+            font = ImageFont.load_default()
+        self.char_width, self.char_height = self._get_font_dimensions(font)
 
     def _setup_video(self, video_path):
         self.video_path = video_path
@@ -55,88 +92,63 @@ class VideoProcessor:
         self.output_height = int(self.rows * self.char_height)
         cap.release()
 
-    def _setup_processor(self):
-        processors = {
-            "LUMINANCE": LuminanceFrameProcessor(),
-            "EDGE_DETECTION": EdgeDetectionFrameProcessor()
-        }
-        self.frame_processor = processors.get(self.config.rendering_method)
-        if not self.frame_processor:
-            raise ValueError(f"Unknown rendering method: {self.config.rendering_method}")
-
-    def _get_font_dimensions(self):
+    def _get_font_dimensions(self, font):
         dummy_img = Image.new("RGB", (100, 100))
         draw = ImageDraw.Draw(dummy_img)
         # Get the bounding box of the text
-        bbox = draw.textbbox((0, 0), "A", font=self.font)
+        bbox = draw.textbbox((0, 0), "A", font=font)
         # bbox returns (left, top, right, bottom)
         char_width = (bbox[2] - bbox[0])
         char_height = (bbox[3] - bbox[1])
         return char_width, char_height
     
-    def _process_chunk(self, args):
-        chunk, ascii, draw, colors = args
-        start_idx, end_idx = chunk
-        for y_idx, row in enumerate(ascii[start_idx:end_idx], start_idx):
-            y = y_idx * self.char_height
-            for x_idx, char in enumerate(row):
-                x = x_idx * self.char_width
-                draw.text((x, y), char, fill=tuple(colors[y_idx, x_idx]), font=self.font)
-
-    def create_ascii_frame(self, normalized_frame):
-        ascii = np.full((self.rows, self.columns), self.config.characters[0].char)
-        colors = np.full((self.rows, self.columns, 3), self.config.characters[0].color)
-        
-        for char_config in self.config.characters:
-            mask = (normalized_frame >= char_config.threshold[0]) & (normalized_frame < char_config.threshold[1])
-            ascii[mask] = char_config.char
-            colors[mask] = np.array(char_config.color)
-            
-        return ascii, colors
-    
-    def _render_ascii_frame(self, ascii, colors):
-        print("Rendering ascii frame...")
-        img = Image.new("RGB", (self.output_width, self.output_height), self.config.background_color)
-        draw = ImageDraw.Draw(img)
-        
-        chunk_size = max(1, self.rows // cpu_count())
-        chunks = [(i, min(i + chunk_size, self.rows)) for i in range(0, self.rows, chunk_size)]
-        chunk_args = [(chunk, ascii, draw, colors) for chunk in chunks]
-        
-        with ThreadPool(processes=cpu_count()) as pool:
-            pool.map(self._process_chunk, chunk_args)
-        
-        frame_out = np.array(img)
-        return cv2.cvtColor(frame_out, cv2.COLOR_RGB2BGR)
-    
-    def _process_frame(self, frame):
-        """Process a single frame with the frame processor"""
-        print("Processing frame...")
-        context = {
-            'columns': self.columns,
-            'rows': self.rows
-        }
-        normalized_frame = self.frame_processor.process(frame, context)
-        ascii, colors = self.create_ascii_frame(normalized_frame)
-        frame_out = self._render_ascii_frame(ascii, colors)
-        return frame_out
-
     def process_video(self):
         print(f"Processing video: {self.video_path}")
         output_path = self._get_output_path()
         
+        # Read all frames first
+        print("Reading video frames...")
         frames = VideoIO.read_video(self.video_path)
-    
-
+        print(f"Total frames to process: {len(frames)}")
+        
+        # Convert Pydantic models to dict and create a simplified config
+        config_dict = {
+            'rendering_method': self.config.rendering_method,
+            'background_color': self.config.background_color,
+            'characters': [
+                {
+                    'char': c.char,
+                    'threshold': c.threshold,
+                    'color': c.color
+                } for c in self.config.characters
+            ]
+        }
+        
+        # Create processing context with serializable data only
+        process_context = {
+            'columns': self.columns,
+            'rows': self.rows,
+            'char_width': self.char_width,
+            'char_height': self.char_height,
+            'config': config_dict,
+            'font_path': self.config.font_path,
+            'font_size': self.config.font_size
+        }
+        
+        # Use functools.partial with the static function
+        frame_processor = partial(process_frame_static, **process_context)
+        
         print("Processing frames in parallel...")
         with Pool(processes=cpu_count()) as pool:
-            processed_frames = pool.map(self._process_frame, frames)
-        # processed_frames = []
-        # for frame in frames:
-        #     processed_frames.append(self._process_frame(frame))
-            
-        print("Processed frames: ", len(processed_frames))
+            processed_frames = list(tqdm(
+                pool.imap(frame_processor, frames),
+                total=len(frames),
+                desc="Processing frames"
+            ))
+        
+        print(f"Writing {len(processed_frames)} processed frames...")
         VideoIO.write_video(processed_frames, output_path, self.fps, (self.output_width, self.output_height))
+        
         return output_path
 
  
@@ -241,3 +253,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

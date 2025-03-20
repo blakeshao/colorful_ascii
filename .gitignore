@@ -160,3 +160,4 @@ cython_debug/
 #.idea/
 
 /ascii-video-processor/backend/output
+/ascii-video-processor/backend/uploads
