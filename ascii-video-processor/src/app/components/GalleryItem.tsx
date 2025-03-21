@@ -21,7 +21,10 @@ export default function GalleryItem({ videoName, config, onSelect }: GalleryItem
   return (
     <div 
       className="border border-foreground bg-background/10 cursor-pointer hover:bg-foreground/50 transition-colors aspect-square relative"
-      onClick={onSelect}
+      onClick={() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        onSelect?.();
+      }}
     >
       {isMounted && (
         <>

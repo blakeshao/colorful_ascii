@@ -6,7 +6,7 @@ import { ASCIIConfig, RenderingMethod } from '../schema';
 
 // Define the videos statically
 const defaultConfig: ASCIIConfig = {
-  font_size: 15,
+  font_size: 30,
   font_path: 'SF-Pro',
   background_color: [255, 255, 255],
   characters: [
@@ -28,9 +28,8 @@ const galleryVideos = [
   // Add all your video filenames here
 ];
 
-export default function Gallery() {
+export default function Gallery({ setAllConfig }: { setAllConfig: (config: ASCIIConfig) => void }) {
   // Use a default config for gallery items
-  
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -39,6 +38,7 @@ export default function Gallery() {
           key={video.name}
           videoName={video.name}
           config={video.config}
+          onSelect={() => setAllConfig(video.config)}
         />
       ))}
     </div>

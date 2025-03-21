@@ -173,7 +173,7 @@ export default function Home() {
       </div>
       <div className="flex flex-col">
         <p className="text-md mb-2">Gallery</p>
-        <Gallery />
+        <Gallery setAllConfig={setAllConfig} />
       </div>
       </div>
     </main>
