@@ -80,7 +80,14 @@ export default function Home() {
     }
   }
 
-
+  const setAllConfig = (config: ASCIIConfig) => {
+    setFontSize(config.font_size)
+    setFontPath(config.font_path)
+    setBackgroundColor(config.background_color)
+    setCharacters(config.characters)
+    setOriginalColor(config.original_color)
+    setRenderingMethod(config.rendering_method)
+  }
   const handleCharacterUpdate = (index: number, field: keyof ASCIICharacter, value: any) => {
     const updatedChars = [...characters]
     if (field === 'threshold') {

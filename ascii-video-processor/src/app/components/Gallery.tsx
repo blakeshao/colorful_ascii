@@ -1,23 +1,45 @@
 'use client';
 
-import { ASCIIConfig } from '../schema';
+import { useEffect, useState } from 'react';
+import GalleryItem from './GalleryItem';
+import { ASCIIConfig, RenderingMethod } from '../schema';
 
-interface GalleryProps {
-  onConfigSelect?: (config: ASCIIConfig) => void;
+// Define the videos statically
+const defaultConfig: ASCIIConfig = {
+  font_size: 15,
+  font_path: 'SF-Pro',
+  background_color: [255, 255, 255],
+  characters: [
+    { char: '.', threshold: [0, 0.2], color: [0, 0, 0] },
+    { char: ':', threshold: [0.2, 0.3], color: [0, 0, 0] },
+    { char: '0', threshold: [0.3, 0.4], color: [0, 0, 0] },
+    { char: '+', threshold: [0.4, 0.5], color: [0, 0, 0] },
+    { char: '*', threshold: [0.5, 1.0], color: [0, 0, 0] },
+  ],
+  original_color: false,
+  rendering_method: RenderingMethod.LUMINANCE
 }
 
-export default function Gallery({ onConfigSelect }: GalleryProps) {
-  // Create array of 9 placeholder items
-  const placeholders = Array(9).fill(null);
+const galleryVideos = [
+  {name: 'sample1.mp4',
+  config: defaultConfig,
+  },
+
+  // Add all your video filenames here
+];
+
+export default function Gallery() {
+  // Use a default config for gallery items
+  
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {placeholders.map((_, i) => (
-        <div 
-          key={i}
-          className="border border-foreground p-4 aspect-video bg-foreground/10"
-        >
-        </div>
+      {galleryVideos.map((video) => (
+        <GalleryItem
+          key={video.name}
+          videoName={video.name}
+          config={video.config}
+        />
       ))}
     </div>
   );

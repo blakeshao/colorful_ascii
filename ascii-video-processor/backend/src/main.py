@@ -6,6 +6,8 @@ from video.router import router as video_router
 from font.router import router as font_router
 import uvicorn
 from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+from gallery_videos.router import router as gallery_videos_router
 # Add debug logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -35,7 +37,7 @@ logger.debug("CORS middleware setup complete")
 
 app.include_router(video_router)
 app.include_router(font_router)
-
+app.include_router(gallery_videos_router)
 
 
 if __name__ == "__main__":
