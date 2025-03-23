@@ -12,8 +12,6 @@ from utils.videoIO import VideoIO
 from pathlib import Path
 from functools import partial
 from tqdm import tqdm
-from psutil import Process
-from os import getpid
 
 def process_frame_static(frame, columns, rows, char_width, char_height, config, font_path, font_size):
         if font_path.endswith(('.ttf', '.otf')):
@@ -108,11 +106,12 @@ class VideoProcessor:
         print(f"Processing video: {self.video_path}")
         output_path = self._get_output_path()
         
-        # Initialize memory tracking
-        process = Process(getpid())
-        initial_memory = process.memory_info().rss / 1024 / 1024  # Convert to MB
+        # Read all frames first
+        print("Reading video frames...")
+        frames = VideoIO.read_video(self.video_path)
+        print(f"Total frames to process: {len(frames)}")
         
-        # Create config dictionary and processing context
+        # Convert Pydantic models to dict and create a simplified config
         config_dict = {
             'rendering_method': self.config.rendering_method,
             'background_color': self.config.background_color,
@@ -125,6 +124,7 @@ class VideoProcessor:
             ]
         }
         
+        # Create processing context with serializable data only
         process_context = {
             'columns': self.columns,
             'rows': self.rows,
@@ -135,36 +135,19 @@ class VideoProcessor:
             'font_size': self.config.font_size
         }
         
+        # Use functools.partial with the static function
         frame_processor = partial(process_frame_static, **process_context)
         
-        # Initialize video writer
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter(output_path, fourcc, self.fps, (self.output_width, self.output_height))
+        print("Processing frames in parallel...")
+        with Pool(processes=cpu_count()) as pool:
+            processed_frames = list(tqdm(
+                pool.imap(frame_processor, frames),
+                total=len(frames),
+                desc="Processing frames"
+            ))
         
-        total_frames = 0
-        batch_size = 30
-        
-        try:
-            for frames_batch in VideoIO.read_video_in_batches(self.video_path, batch_size):
-                # Process batch in parallel
-                with Pool(processes=cpu_count()) as pool:
-                    processed_frames = list(pool.imap(frame_processor, frames_batch))
-                    
-                # Write processed frames immediately
-                for frame in processed_frames:
-                    out.write(frame)
-                    
-                total_frames += len(frames_batch)
-                
-                # Log memory usage
-                current_memory = process.memory_info().rss / 1024 / 1024
-                memory_diff = current_memory - initial_memory
-                print(f"Processed {total_frames} frames... "
-                      f"Current memory: {current_memory:.1f} MB "
-                      f"(Change: {memory_diff:+.1f} MB)")
-                
-        finally:
-            out.release()
+        print(f"Writing {len(processed_frames)} processed frames...")
+        VideoIO.write_video(processed_frames, output_path, self.fps, (self.output_width, self.output_height))
         
         return output_path
 
