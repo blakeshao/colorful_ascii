@@ -12,6 +12,8 @@ from utils.videoIO import VideoIO
 from pathlib import Path
 from functools import partial
 from tqdm import tqdm
+from psutil import Process
+from os import getpid
 
 def process_frame_static(frame, columns, rows, char_width, char_height, config, font_path, font_size):
         if font_path.endswith(('.ttf', '.otf')):
@@ -106,6 +108,10 @@ class VideoProcessor:
         print(f"Processing video: {self.video_path}")
         output_path = self._get_output_path()
         
+        # Initialize memory tracking
+        process = Process(getpid())
+        initial_memory = process.memory_info().rss / 1024 / 1024  # Convert to MB
+        
         # Create config dictionary and processing context
         config_dict = {
             'rendering_method': self.config.rendering_method,
@@ -136,7 +142,7 @@ class VideoProcessor:
         out = cv2.VideoWriter(output_path, fourcc, self.fps, (self.output_width, self.output_height))
         
         total_frames = 0
-        batch_size = 30  # Adjust based on your memory constraints
+        batch_size = 30
         
         try:
             for frames_batch in VideoIO.read_video_in_batches(self.video_path, batch_size):
@@ -149,7 +155,13 @@ class VideoProcessor:
                     out.write(frame)
                     
                 total_frames += len(frames_batch)
-                print(f"Processed {total_frames} frames...")
+                
+                # Log memory usage
+                current_memory = process.memory_info().rss / 1024 / 1024
+                memory_diff = current_memory - initial_memory
+                print(f"Processed {total_frames} frames... "
+                      f"Current memory: {current_memory:.1f} MB "
+                      f"(Change: {memory_diff:+.1f} MB)")
                 
         finally:
             out.release()
