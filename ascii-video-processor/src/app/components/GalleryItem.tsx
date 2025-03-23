@@ -1,20 +1,18 @@
 'use client';
 
-import { ASCIIConfig } from '../schema';
+
 import { useEffect, useState } from 'react';
 
 interface GalleryItemProps {
   videoName: string;
-  config: ASCIIConfig;
   onSelect?: () => void;
 }
 
-export default function GalleryItem({ videoName, config, onSelect }: GalleryItemProps) {
+export default function GalleryItem({ videoName, onSelect }: GalleryItemProps) {
   const videoUrl =  `/gallery-videos/${videoName}`;
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    console.log("videoUrl", videoUrl)
     setIsMounted(true);
   }, []);
 

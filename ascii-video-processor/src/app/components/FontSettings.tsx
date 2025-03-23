@@ -20,7 +20,6 @@ export function FontSettings({ selectedFont, fontSize, onFontChange, onFontSizeC
       .then(res => res.json())
       .then(fonts => setAvailableFonts(fonts))
       .catch(err => console.error('Error loading fonts:', err));
-    console.log('Available fonts:', availableFonts);
   }, []);
 
 

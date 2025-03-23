@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import GalleryItem from './GalleryItem';
 import { ASCIIConfig, RenderingMethod } from '../schema';
 
@@ -37,7 +36,6 @@ export default function Gallery({ setAllConfig }: { setAllConfig: (config: ASCII
         <GalleryItem
           key={video.name}
           videoName={video.name}
-          config={video.config}
           onSelect={() => setAllConfig(video.config)}
         />
       ))}

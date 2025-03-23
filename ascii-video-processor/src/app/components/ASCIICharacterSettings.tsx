@@ -3,7 +3,11 @@ import { ASCIICharacter } from '../schema';
 import { rgbToHex, hexToRgb } from '../util';
 interface ASCIICharacterSettingsProps {
   asciiChars: ASCIICharacter[];
-  onCharacterUpdate: (index: number, field: keyof ASCIICharacter, value: any) => void;
+  onCharacterUpdate: (
+    index: number, 
+    field: keyof ASCIICharacter, 
+    value: string | [number, number] | [number, number, number]
+  ) => void;
 }
 
 export function ASCIICharacterSettings({ asciiChars, onCharacterUpdate }: ASCIICharacterSettingsProps) {

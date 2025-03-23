@@ -45,15 +45,7 @@ export default function Home() {
 
     formData.append('config', JSON.stringify(config))
 
-    
-
-    console.log('File:', file);
-    console.log('Config:', config);
-    console.log('FormData entries:');
-    for (let pair of formData.entries()) {
-      console.log(pair[0], pair[1]);
-    }
-
+  
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/process-video`, {
@@ -88,14 +80,14 @@ export default function Home() {
     setOriginalColor(config.original_color)
     setRenderingMethod(config.rendering_method)
   }
-  const handleCharacterUpdate = (index: number, field: keyof ASCIICharacter, value: any) => {
+  const handleCharacterUpdate = (index: number, field: keyof ASCIICharacter, value: string | [number, number] | [number, number, number]) => {
     const updatedChars = [...characters]
     if (field === 'threshold') {
-      updatedChars[index].threshold = value.map(Number)
+      updatedChars[index].threshold = value as [number, number]
     } else if (field === 'color') {
-      updatedChars[index].color = value.map(Number)
+      updatedChars[index].color = value as [number, number, number]
     } else {
-      updatedChars[index] = { ...updatedChars[index], [field]: value }
+      updatedChars[index] = { ...updatedChars[index], [field]: value as string }
     }
     setCharacters(updatedChars)
   }
