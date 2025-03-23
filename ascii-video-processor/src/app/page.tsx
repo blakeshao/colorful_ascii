@@ -51,6 +51,10 @@ export default function Home() {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/process-video`, {
         method: 'POST',
         body: formData,
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+        }
       })
       
       if (!response.ok) {
