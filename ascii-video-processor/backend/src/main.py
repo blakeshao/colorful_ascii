@@ -38,7 +38,9 @@ app.add_middleware(
     allow_origins=[
         "https://colorfulascii.vercel.app",
         "http://colorfulascii.vercel.app",
-        "http://localhost:3000"
+        "http://localhost:3000",
+        "https://colorful-ascii.onrender.com"
+
     ],
     allow_credentials=False,
     allow_methods=["*"],
