@@ -118,7 +118,7 @@ export default function Home() {
               </div>
             ) : videoUrl ? (
               <div className="w-full h-full flex justify-center items-center p-4">
-                <video controls src={videoUrl} className="max-w-full max-h-full object-contain" />
+                <video controls src={videoUrl} className="max-w-full max-h-full object-contain" autoPlay/>
               </div>
             ) : (
               <div className="w-full flex justify-center items-center h-full">
