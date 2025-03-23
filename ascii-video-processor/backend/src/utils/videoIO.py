@@ -40,7 +40,7 @@ class VideoIO:
     @staticmethod
     def write_video(frames, output_path, fps, dimensions):
         # Try different codecs in order of preference
-        codecs = ['mp4v', 'avc1', 'XVID']
+        codecs = ['avc1', 'mp4v', 'XVID']
         
         for codec in codecs:
             fourcc = cv2.VideoWriter_fourcc(*codec)

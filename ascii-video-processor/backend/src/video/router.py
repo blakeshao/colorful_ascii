@@ -62,7 +62,11 @@ async def process_video(
             return FileResponse(
                 output_path,
                 media_type='video/mp4',
-                filename=Path(output_path).name
+                filename=Path(output_path).name,
+                headers={
+                    "Accept-Ranges": "bytes",
+                    "Content-Disposition": f'inline; filename="{Path(output_path).name}"'
+                }
             )
 
             
