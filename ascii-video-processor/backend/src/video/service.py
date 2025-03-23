@@ -102,107 +102,61 @@ class VideoProcessor:
         char_height = (bbox[3] - bbox[1])
         return char_width, char_height
     
-    # def process_video(self):
-    #     print(f"Processing video: {self.video_path}")
-    #     output_path = self._get_output_path()
-        
-    #     # Read all frames first
-    #     print("Reading video frames...")
-    #     frames = VideoIO.read_video(self.video_path)
-    #     print(f"Total frames to process: {len(frames)}")
-        
-    #     # Convert Pydantic models to dict and create a simplified config
-    #     config_dict = {
-    #         'rendering_method': self.config.rendering_method,
-    #         'background_color': self.config.background_color,
-    #         'characters': [
-    #             {
-    #                 'char': c.char,
-    #                 'threshold': c.threshold,
-    #                 'color': c.color
-    #             } for c in self.config.characters
-    #         ]
-    #     }
-        
-    #     # Create processing context with serializable data only
-    #     process_context = {
-    #         'columns': self.columns,
-    #         'rows': self.rows,
-    #         'char_width': self.char_width,
-    #         'char_height': self.char_height,
-    #         'config': config_dict,
-    #         'font_path': self.config.font_path,
-    #         'font_size': self.config.font_size
-    #     }
-        
-    #     # Use functools.partial with the static function
-    #     frame_processor = partial(process_frame_static, **process_context)
-        
-    #     print("Processing frames in parallel...")
-    #     with Pool(processes=cpu_count()) as pool:
-    #         processed_frames = list(tqdm(
-    #             pool.imap(frame_processor, frames),
-    #             total=len(frames),
-    #             desc="Processing frames"
-    #         ))
-        
-    #     print(f"Writing {len(processed_frames)} processed frames...")
-    #     VideoIO.write_video(processed_frames, output_path, self.fps, (self.output_width, self.output_height))
-        
-    #     return output_path
-
     def process_video(self):
         print(f"Processing video: {self.video_path}")
         output_path = self._get_output_path()
         
-        # Process frames in batches
-        processed_frames = []
-        with Pool(processes=cpu_count()) as pool:
-            for batch in VideoIO.read_video_in_batches(self.video_path, batch_size=30):
-                # Convert Pydantic models to dict and create a simplified config
-                config_dict = {
-                    'rendering_method': self.config.rendering_method,
-                    'background_color': self.config.background_color,
-                    'characters': [
-                        {
-                            'char': c.char,
-                            'threshold': c.threshold,
-                            'color': c.color
-                        } for c in self.config.characters
-                    ]
-                }
-                
-                # Create processing context
-                process_context = {
-                    'columns': self.columns,
-                    'rows': self.rows,
-                    'char_width': self.char_width,
-                    'char_height': self.char_height,
-                    'config': config_dict,
-                    'font_path': self.config.font_path,
-                    'font_size': self.config.font_size
-                }
-                
-                frame_processor = partial(process_frame_static, **process_context)
-                
+        # Create config dictionary and processing context
+        config_dict = {
+            'rendering_method': self.config.rendering_method,
+            'background_color': self.config.background_color,
+            'characters': [
+                {
+                    'char': c.char,
+                    'threshold': c.threshold,
+                    'color': c.color
+                } for c in self.config.characters
+            ]
+        }
+        
+        process_context = {
+            'columns': self.columns,
+            'rows': self.rows,
+            'char_width': self.char_width,
+            'char_height': self.char_height,
+            'config': config_dict,
+            'font_path': self.config.font_path,
+            'font_size': self.config.font_size
+        }
+        
+        frame_processor = partial(process_frame_static, **process_context)
+        
+        # Initialize video writer
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        out = cv2.VideoWriter(output_path, fourcc, self.fps, (self.output_width, self.output_height))
+        
+        total_frames = 0
+        batch_size = 30  # Adjust based on your memory constraints
+        
+        try:
+            for frames_batch in VideoIO.read_video_in_batches(self.video_path, batch_size):
                 # Process batch in parallel
-                batch_processed = list(tqdm(
-                    pool.imap(frame_processor, batch),
-                    total=len(batch),
-                    desc="Processing batch"
-                ))
+                with Pool(processes=cpu_count()) as pool:
+                    processed_frames = list(pool.imap(frame_processor, frames_batch))
+                    
+                # Write processed frames immediately
+                for frame in processed_frames:
+                    out.write(frame)
+                    
+                total_frames += len(frames_batch)
+                print(f"Processed {total_frames} frames...")
                 
-                # Write processed batch immediately
-                VideoIO.write_video(
-                    batch_processed, 
-                    output_path if processed_frames else output_path,
-                    self.fps, 
-                    (self.output_width, self.output_height)
-                )
-                processed_frames.extend(batch_processed)
+        finally:
+            out.release()
         
         return output_path
 
+ 
  
         
     def _get_output_path(self):
