@@ -39,13 +39,25 @@ class VideoIO:
 
     @staticmethod
     def write_video(frames, output_path, fps, dimensions):
-        fourcc = cv2.VideoWriter_fourcc(*'avc1')
-        out = cv2.VideoWriter(output_path, fourcc, fps, dimensions)
-        try:
-            for frame in frames:
-                out.write(frame)
-        finally:
-            out.release()
+        # Try different codecs in order of preference
+        codecs = ['mp4v', 'avc1', 'XVID']
+        
+        for codec in codecs:
+            fourcc = cv2.VideoWriter_fourcc(*codec)
+            out = cv2.VideoWriter(output_path, fourcc, fps, dimensions)
+            
+            if out.isOpened():
+                try:
+                    for frame in frames:
+                        out.write(frame)
+                    logger.info(f"Successfully wrote video using codec: {codec}")
+                    return
+                finally:
+                    out.release()
+            else:
+                out.release()
+                
+        raise RuntimeError("Failed to initialize VideoWriter with any available codec")
   
 
   
