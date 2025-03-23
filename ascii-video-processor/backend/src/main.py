@@ -35,7 +35,7 @@ clear_directory(BASE_DIR / "output")
 logger.debug("Setting up CORS middleware...")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://colorful-ascii.onrender.com", "http://localhost:3000"],
+    allow_origins=["colorfulascii.vercel.app", "http://localhost:3000"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
