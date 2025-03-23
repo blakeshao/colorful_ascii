@@ -42,7 +42,7 @@ app.add_middleware(
         "https://colorful-ascii.onrender.com"
 
     ],
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
