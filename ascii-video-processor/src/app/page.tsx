@@ -84,12 +84,14 @@ export default function Home() {
     setOriginalColor(config.original_color)
     setRenderingMethod(config.rendering_method)
   }
-  const handleCharacterUpdate = (index: number, field: keyof ASCIICharacter, value: string | [number, number] | [number, number, number]) => {
+  const handleCharacterUpdate = (index: number, field: keyof ASCIICharacter | 'newCharacter', value: string | [number, number] | [number, number, number] | ASCIICharacter) => {
     const updatedChars = [...characters]
     if (field === 'threshold') {
       updatedChars[index].threshold = value as [number, number]
     } else if (field === 'color') {
       updatedChars[index].color = value as [number, number, number]
+    } else if (field === 'newCharacter') {
+      updatedChars.push(value as ASCIICharacter)
     } else {
       updatedChars[index] = { ...updatedChars[index], [field]: value as string }
     }

@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 from enum import Enum
 from typing import Literal
+
+
 class ASCII_Character(BaseModel):
     char: str
     threshold: tuple[float, float]

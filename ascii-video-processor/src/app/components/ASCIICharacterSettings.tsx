@@ -5,8 +5,8 @@ interface ASCIICharacterSettingsProps {
   asciiChars: ASCIICharacter[];
   onCharacterUpdate: (
     index: number, 
-    field: keyof ASCIICharacter, 
-    value: string | [number, number] | [number, number, number]
+    field: keyof ASCIICharacter | 'newCharacter', 
+    value: string | [number, number] | [number, number, number] | ASCIICharacter
   ) => void;
 }
 
@@ -87,6 +87,21 @@ export function ASCIICharacterSettings({ asciiChars, onCharacterUpdate }: ASCIIC
             </div>
           </div>
         ))}
+        
+        <button
+          onClick={() => {
+            const lastChar = asciiChars[asciiChars.length - 1];
+            const newChar: ASCIICharacter = {
+              char: lastChar.char,
+              threshold: [1.0, 1.0],
+              color: [...lastChar.color]
+            };
+            onCharacterUpdate(asciiChars.length, 'newCharacter', newChar);
+          }}
+          className="mt-4 p-4 border"
+        >
+          +
+        </button>
       </div>
     </div>
   );

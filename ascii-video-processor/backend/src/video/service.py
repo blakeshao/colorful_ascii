@@ -12,42 +12,49 @@ from utils.videoIO import VideoIO
 from pathlib import Path
 from functools import partial
 from tqdm import tqdm
-
+from font.service import FontManager
 def process_frame_static(frame, columns, rows, char_width, char_height, config, font_path, font_size):
-        if font_path.endswith(('.ttf', '.otf')):
-            font = ImageFont.truetype(font_path, font_size)
-        else:
+    # Create font with the specified size
+    
+    print(f"Font path: {font_path}")
+    if font_path.endswith(('.ttf', '.otf')):
+        try:
+            font = ImageFont.truetype(font_path, size=font_size)
+        except Exception as e:
+            print(f"Error loading font: {e}")
             font = ImageFont.load_default()
+    else:
+        font = ImageFont.load_default()
             
-        # Process frame based on rendering method
-        context = {'columns': columns, 'rows': rows}
-        
-        if config['rendering_method'] == "LUMINANCE":
-            processed_frame = luminance_process(frame, context)
-        else:  # EDGE_DETECTION
-            processed_frame = edge_detection_process(frame, context)
-        
-        # Create ASCII representation
-        ascii = np.full((rows, columns), config['characters'][0]['char'])
-        colors = np.full((rows, columns, 3), config['characters'][0]['color'])
-        
-        for char_config in config['characters']:
-            mask = (processed_frame >= char_config['threshold'][0]) & (processed_frame < char_config['threshold'][1])
-            ascii[mask] = char_config['char']
-            colors[mask] = np.array(char_config['color'])
-        
-        # Render ASCII frame
-        img = Image.new("RGB", (columns * char_width, rows * char_height), config['background_color'])
-        draw = ImageDraw.Draw(img)
-        
-        for y_idx, row in enumerate(ascii):
-            y = y_idx * char_height
-            for x_idx, char in enumerate(row):
-                x = x_idx * char_width
-                draw.text((x, y), char, fill=tuple(colors[y_idx, x_idx]), font=font)
-        
-        frame_out = np.array(img)
-        return cv2.cvtColor(frame_out, cv2.COLOR_RGB2BGR)
+    # Process frame based on rendering method
+    context = {'columns': columns, 'rows': rows}
+    
+    if config['rendering_method'] == "LUMINANCE":
+        processed_frame = luminance_process(frame, context)
+    else:  # EDGE_DETECTION
+        processed_frame = edge_detection_process(frame, context)
+    
+    # Create ASCII representation
+    ascii = np.full((rows, columns), config['characters'][0]['char'])
+    colors = np.full((rows, columns, 3), config['characters'][0]['color'])
+    
+    for char_config in config['characters']:
+        mask = (processed_frame >= char_config['threshold'][0]) & (processed_frame < char_config['threshold'][1])
+        ascii[mask] = char_config['char']
+        colors[mask] = np.array(char_config['color'])
+    
+    # Render ASCII frame
+    img = Image.new("RGB", (columns * char_width, rows * char_height), config['background_color'])
+    draw = ImageDraw.Draw(img)
+    
+    for y_idx, row in enumerate(ascii):
+        y = y_idx * char_height
+        for x_idx, char in enumerate(row):
+            x = x_idx * char_width
+            draw.text((x, y), char, fill=tuple(colors[y_idx, x_idx]), font=font)
+    
+    frame_out = np.array(img)
+    return cv2.cvtColor(frame_out, cv2.COLOR_RGB2BGR)
 
 class VideoProcessor:
     def __init__(self, video_path, rendering_config: RenderingConfig):
@@ -63,12 +70,18 @@ class VideoProcessor:
 
 
     def _setup_font(self):
-        print("font_path: ", self.config.font_path)
-        if self.config.font_path.endswith(('.ttf', '.otf')):
-            font = ImageFont.truetype(self.config.font_path, self.config.font_size)
+        font_manager = FontManager()
+        self.font_path = font_manager.get_font_path(self.config.font_path)
+        print(f"Setting up font with size: {self.config.font_size}")
+        print(f"Font path: {self.font_path}")
+        if self.font_path:
+            print(f"Loading font from path: {self.font_path}")
+            font = ImageFont.truetype(self.font_path, self.config.font_size)
         else:
+            print("Using default font")
             font = ImageFont.load_default()
         self.char_width, self.char_height = self._get_font_dimensions(font)
+        print(f"Font dimensions - width: {self.char_width}, height: {self.char_height}")
 
     def _setup_video(self, video_path):
         self.video_path = video_path
@@ -98,8 +111,8 @@ class VideoProcessor:
         # Get the bounding box of the text
         bbox = draw.textbbox((0, 0), "A", font=font)
         # bbox returns (left, top, right, bottom)
-        char_width = (bbox[2] - bbox[0])
-        char_height = (bbox[3] - bbox[1])
+        char_width = int((bbox[2] - bbox[0])*1.2)
+        char_height = int((bbox[3] - bbox[1])*1.2)
         return char_width, char_height
     
     def process_video(self):
@@ -131,7 +144,7 @@ class VideoProcessor:
             'char_width': self.char_width,
             'char_height': self.char_height,
             'config': config_dict,
-            'font_path': self.config.font_path,
+            'font_path': self.font_path,
             'font_size': self.config.font_size
         }
         

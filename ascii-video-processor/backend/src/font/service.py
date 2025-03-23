@@ -9,13 +9,14 @@ class FontManager:
         self.available_fonts: Dict[str, Path] = self._scan_fonts()
         print(f"Fonts directory: {self.fonts_dir}")
         print(f"Available fonts: {self.available_fonts}")
+    
 
     def _scan_fonts(self) -> Dict[str, Path]:
         fonts = {}
         for font_file in self.fonts_dir.glob("*.ttf"):
             # Use the filename (without extension) as both key and display name
             name = font_file.stem
-            fonts[name] = font_file
+            fonts[name] = self.fonts_dir / f"{name}.ttf"
         return fonts
 
     def get_font_path(self, font_name: str) -> str:
@@ -29,10 +30,8 @@ class FontManager:
             available = list(self.available_fonts.keys())
             raise ValueError(f"Font '{font_name}' not found. Available fonts: {available}")
             
+        print(f"Font path: {self.available_fonts[font_name]}")
         return str(self.available_fonts[font_name])
 
-    def list_fonts(self) -> List[dict]:
-        return [
-            {"name": name, "value": name}  # Just return the font name as the value
-            for name in self.available_fonts.keys()
-        ]
+    def list_fonts(self):
+        return [{"name": font_name, "value": font_name} for font_name in self.available_fonts.keys()]
