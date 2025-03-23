@@ -56,7 +56,7 @@ export default function Home() {
 
 
     try {
-      const response = await fetch('http://localhost:8000/api/process-video', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/process-video`, {
         method: 'POST',
         body: formData,
       })

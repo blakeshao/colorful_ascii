@@ -16,7 +16,7 @@ export function FontSettings({ selectedFont, fontSize, onFontChange, onFontSizeC
   const [availableFonts, setAvailableFonts] = useState<Font[]>([]);
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/fonts')
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fonts`)
       .then(res => res.json())
       .then(fonts => setAvailableFonts(fonts))
       .catch(err => console.error('Error loading fonts:', err));

@@ -21,7 +21,16 @@ os.makedirs(BASE_DIR / "output", exist_ok=True)
 app = FastAPI()
 
 
+def clear_directory(directory: Path):
+    logger.debug(f"Clearing directory: {directory}")
+    if directory.exists():
+        for file in directory.iterdir():
+            if file.is_file():
+                file.unlink()
+                logger.debug(f"Deleted file: {file}")
 
+clear_directory(BASE_DIR / "uploads")
+clear_directory(BASE_DIR / "output")
 
 logger.debug("Setting up CORS middleware...")
 app.add_middleware(
@@ -41,5 +50,5 @@ app.include_router(gallery_videos_router)
 
 
 if __name__ == "__main__":
-    
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
