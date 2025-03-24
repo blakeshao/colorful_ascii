@@ -164,3 +164,4 @@ cython_debug/
 /ascii-video-processor/backend/output
 /ascii-video-processor/backend/uploads
 
+.DS_Store
