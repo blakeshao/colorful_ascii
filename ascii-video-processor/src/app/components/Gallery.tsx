@@ -83,7 +83,7 @@ const galleryVideos = [
     name: 'rippling.mp4',
     config: {
       font_size: 45,
-      font_path: path.join('KaseiHarunoUmi-Regular'),
+      font_path: path.join('KaiseiHarunoUmi-Regular'),
       background_color: [0, 64, 255] as [number, number, number],
       characters: [
         { char: 'ジ', threshold: [0, 0.05], color: [255, 102, 0] },
@@ -103,6 +103,48 @@ const galleryVideos = [
     }
   },
 
+  {   
+    name: 'flowers.mp4',
+    config: {
+      font_size: 30,
+      font_path: path.join('GowunBatang-Regular'),
+      background_color: [255, 255, 255] as [number, number, number],
+      characters: [
+        { char: '있', threshold: [0, 0.3], color: [40, 60, 130] },
+        { char: '이', threshold: [0.3, 0.4], color: [40, 60, 130] },
+        { char: '없', threshold: [0.4, 0.5], color: [40, 60, 130] },
+        { char: ']', threshold: [0.5, 0.6], color: [40, 60, 130] },
+        { char: '，', threshold: [0.6, 1.0], color: [40, 60, 130] },
+      ] as ASCIICharacter[],
+      original_color: false,
+      rendering_method: RenderingMethod.LUMINANCE
+
+    }
+  },
+
+  {   
+    name: 'jetset.mp4',
+    config: {
+      font_size: 10,
+      font_path: path.join('KaiseiHarunoUmi-Regular'),
+      background_color: [0, 133, 88] as [number, number, number],
+      characters: [
+        { char: 'ジ', threshold: [0, 0.05], color: [255, 255, 255] },
+        { char: 'ケ', threshold: [0.05, 0.15], color: [255, 255, 255]},
+        { char: 'W', threshold: [0.15, 0.25], color: [255, 255, 255]},
+        { char: 'ム', threshold: [0.25, 0.35], color: [255, 255, 255]},
+        { char: 'Z', threshold: [0.35, 0.4], color: [255, 255, 255]},
+        { char: 'I', threshold: [0.4, 0.45], color: [255, 255, 255]},
+        { char: ')', threshold: [0.45, 0.5], color: [255, 255, 255 ] },
+        { char: '{', threshold: [0.5, 0.55], color: [255, 255, 255 ]  },
+        { char: ';', threshold: [0.55, 0.7], color: [255, 255, 255] },
+        { char: ',', threshold: [0.7, 1.0], color: [255, 255, 255] },
+      ] as ASCIICharacter[],
+      original_color: false,
+      rendering_method: RenderingMethod.LUMINANCE
+
+    }
+  },
   // Add all your video filenames here
 ];
 
